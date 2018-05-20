@@ -9,7 +9,7 @@ var _ Weight = &SW{}
 
 // SW smooth weighted round-robin implement
 type SW struct {
-	mtx   *sync.RWMutex
+	mtx   sync.RWMutex
 	elems []*smoothElem
 }
 
@@ -21,6 +21,10 @@ type smoothElem struct {
 
 	name string
 	elem interface{}
+}
+
+func (se *smoothElem) String() string {
+	return fmt.Sprintf("%+v", *se)
 }
 
 // Add a naming element with weight
@@ -137,14 +141,14 @@ func (sw *SW) Close(fn func(interface{}) error) error {
 // Next pick up next element under smooth round-robin weight balancing
 func (sw *SW) Next() interface{} {
 	sw.mtx.RLock()
-	defer sw.mtx.Unlock()
+	defer sw.mtx.RUnlock()
 
 	if sw.elems == nil || len(sw.elems) == 0 {
 		return nil
 	}
 
-	next := &smoothElem{}
 	var total int
+	next := &smoothElem{}
 	for _, elem := range sw.elems {
 		total += elem.effectiveWeight
 		elem.currentWeight += elem.effectiveWeight
@@ -153,11 +157,11 @@ func (sw *SW) Next() interface{} {
 			elem.effectiveWeight++
 		}
 
-		if next == nil || next.effectiveWeight < elem.effectiveWeight {
+		if next == nil || next.currentWeight < elem.currentWeight {
 			next = elem
 		}
 	}
 
 	next.currentWeight -= total
-	return next
+	return next.elem
 }
