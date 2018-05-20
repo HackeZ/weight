@@ -115,6 +115,25 @@ func (sw *SW) Total() int {
 	return total
 }
 
+// Close all element using fn
+func (sw *SW) Close(fn func(interface{}) error) error {
+	sw.mtx.Lock()
+	defer sw.mtx.Unlock()
+
+	if fn == nil {
+		return nil
+	}
+
+	for _, elem := range sw.elems {
+		err := fn(elem)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 // Next pick up next element under smooth round-robin weight balancing
 func (sw *SW) Next() interface{} {
 	sw.mtx.RLock()

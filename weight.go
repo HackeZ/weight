@@ -19,4 +19,7 @@ type Weight interface {
 
 	// Total return total weight of this Weight
 	Total() int
+
+	// Close weight balancing using close function
+	Close(fn func(interface{}) error) error
 }
